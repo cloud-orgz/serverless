@@ -124,21 +124,14 @@ def hello_pubsub(cloud_event):
     # Mailgun API URL
     mailgun_api_url = f"https://api.mailgun.net/v3/mail.{domain_name}/messages"
     # Email content with verification link also shown at the bottom
-    html_content = f"""
-    <html>
-        <body>
-            <p>Please verify your email address by clicking on the link below:</p>
-            <p><a href="{verification_link}">{verification_link}</a></p>
-        </body>
-    </html>
-    """
+    html_content = f"Click the link to verify email {verification_link}"
 
     # Send the email using Mailgun
     response = requests.post(
         mailgun_api_url,
         auth=("api", os.environ.get('MAILGUN_API_KEY')),  # Use environment variable for API key
         data={
-            "from": f"Webapp <noreply@mail.{domain_name}>",
+            "from": f"Webapp <mailgun@{domain_name}>",
             "to": email,
             "subject": "Verify Email Address",
             "html": html_content
