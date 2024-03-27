@@ -58,6 +58,46 @@ def insert_verification_token(user_id):
 
     return token
 
+def track_email_sent(email, user_id):
+    # Generate a random UUID for the email tracking record
+    track_id = generate_random_id()
+
+    # Convert string UUID (user_id) to a binary format for consistency with your schema
+    user_id_bin = uuid.UUID(user_id).bytes
+
+    # Current timestamp
+    sent_at = datetime.now()
+
+    # Connect to the database
+    conn = pymysql.connect(
+        db=os.environ['DB_NAME'],
+        user=os.environ['DB_USER'],
+        password=os.environ['DB_PASS'],
+        host=os.environ['DB_HOST'],
+        charset='utf8mb4',
+        cursorclass=pymysql.cursors.DictCursor
+    )
+
+    with conn.cursor() as cur:
+        try:
+            # Insert the new track_email record into the database
+            cur.execute("""
+                INSERT INTO track_email (id, email, user_id, sent_at)
+                VALUES (%s, %s, %s, %s)
+            """, (track_id, email, user_id_bin, sent_at))
+
+            # Commit the transaction
+            conn.commit()
+            print(f"Email sent to {email} tracked successfully with ID {track_id}")
+
+        except Exception as e:
+            # Rollback the transaction in case of error
+            conn.rollback()
+            print(f"Error tracking email sent to {email}: {e}")
+        finally:
+            cur.close()
+            conn.close()
+
 @functions_framework.cloud_event
 def hello_pubsub(cloud_event):
     # Decode the base64-encoded data from Pub/Sub
@@ -72,17 +112,17 @@ def hello_pubsub(cloud_event):
 
     # Insert verification token and receive the generated token
     token = insert_verification_token(user_id)
-    domain_name = os.environ.get('DOMAIN_NAME')
-    # Generate the verification link using the generated token
-    verification_link = f"http://mukulsaipendem.me:8080/v1/user/verify?token={token}"  # Use the actual token
+    # Read domain name from environment variable
+    domain_name = os.environ.get('DOMAIN_NAME', 'mukulsaipendem.me')
+    # Generate the verification link using the generated token and the domain name
+    verification_link = f"http://{domain_name}:8080/v1/user/verify?token={token}"  # Use the actual token
 
     email = message_dict.get('username')
     username = message_dict.get('firstName', 'User')  # Default to 'User' if not provided
 
     # Mailgun API URL
-    mailgun_api_url = f"https://api.mailgun.net/v3/mail.mukulsaipendem.me/messages"
-    # Email content
-    subject = "Please Verify Your Email Address"
+    mailgun_api_url = f"https://api.mailgun.net/v3/mail.{domain_name}/messages"
+    # Email content with verification link also shown at the bottom
     html_content = f"""
     <html>
         <body>
@@ -90,6 +130,9 @@ def hello_pubsub(cloud_event):
             <p>Please verify your email address by clicking on the link below:</p>
             <a href="{verification_link}">Verify Email</a>
             <p>If you did not request this, please ignore this email.</p>
+            <br>
+            <p>If you're having trouble with the button above, copy and paste the URL below into your web browser.</p>
+            <p><a href="{verification_link}">{verification_link}</a></p>
         </body>
     </html>
     """
@@ -99,9 +142,9 @@ def hello_pubsub(cloud_event):
         mailgun_api_url,
         auth=("api", os.environ.get('MAILGUN_API_KEY')),  # Use environment variable for API key
         data={
-            "from": "Webapp <noreply@mail.mukulsaipendem.me>",
+            "from": f"Webapp <noreply@mail.{domain_name}>",
             "to": email,
-            "subject": subject,
+            "subject": "Please Verify Your Email Address",
             "html": html_content
         }
     )
@@ -109,5 +152,6 @@ def hello_pubsub(cloud_event):
     # Check the response from Mailgun
     if response.status_code == 200:
         print("Email sent successfully")
+        track_email_sent(email, user_id)
     else:
         print(f"Failed to send email, status code: {response.status_code}, response text: {response.text}")
