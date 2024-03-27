@@ -134,7 +134,7 @@ def hello_pubsub(cloud_event):
             "from": f"Webapp <mailgun@mail.{domain_name}>",
             "to": email,
             "subject": "Verify Email Address",
-            "html": html_content
+            "text": html_content
         }
     )
 
