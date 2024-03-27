@@ -124,17 +124,43 @@ def hello_pubsub(cloud_event):
     # Mailgun API URL
     mailgun_api_url = f"https://api.mailgun.net/v3/mail.{domain_name}/messages"
     # Email content with verification link also shown at the bottom
-    html_content = f"Click the link to verify email {verification_link}"
+    html_content = f"""
+    <html>
+        <body>
+            <p>Hi {username},</p>
+            <p>Please verify your email address by clicking on the button below:</p>
+            <table width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                    <td>
+                        <table cellspacing="0" cellpadding="0">
+                            <tr>
+                                <td style="border-radius: 2px;" bgcolor="#ED2939">
+                                    <a href="{verification_link}" target="_blank" style="padding: 8px 12px; border: 1px solid #ED2939;border-radius: 2px;color: #ffffff; font-family: Helvetica, Arial, sans-serif; font-size: 14px; text-decoration: none; display: inline-block;">
+                                        Verify Email
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+            <p>If you did not request this, please ignore this email.</p>
+            <br>
+            <p>If you're having trouble with the button above, copy and paste the URL below into your web browser:</p>
+            <p><a href="{verification_link}">{verification_link}</a></p>
+        </body>
+    </html>
+    """
 
     # Send the email using Mailgun
     response = requests.post(
         mailgun_api_url,
         auth=("api", os.environ.get('MAILGUN_API_KEY')),  # Use environment variable for API key
         data={
-            "from": f"Webapp <mailgun@mail.{domain_name}>",
+            "from": f"Webapp <noreply@mail.{domain_name}>",
             "to": email,
-            "subject": "Verify Email Address",
-            "text": html_content
+            "subject": "Please Verify Your Email Address",
+            "html": html_content
         }
     )
 
