@@ -36,7 +36,7 @@ def insert_verification_token(user_id):
             token_id_bin = generate_random_id()
             token = uuid.uuid4().hex
             min = os.environ['EXPIRE_MIN']
-            expiry_date = datetime.now() + timedelta(minutes=min)
+            expiry_date = datetime.now() + timedelta(minutes=int(min))
 
             # Insert the new verification token into the database
             cur.execute("""
@@ -131,7 +131,7 @@ def hello_pubsub(cloud_event):
         mailgun_api_url,
         auth=("api", os.environ.get('MAILGUN_API_KEY')),  # Use environment variable for API key
         data={
-            "from": f"Webapp <mailgun@{domain_name}>",
+            "from": f"Webapp <mailgun@mail.{domain_name}>",
             "to": email,
             "subject": "Verify Email Address",
             "html": html_content
