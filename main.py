@@ -131,10 +131,10 @@ def hello_pubsub(cloud_event):
         mailgun_api_url,
         auth=("api", os.environ.get('MAILGUN_API_KEY')),  # Use environment variable for API key
         data={
-            "from": f"Webapp <mailgun@{domain_name}>",
+            "from": f"Webapp <mailgun@mail.{domain_name}>",
             "to": email,
             "subject": "Verify Email Address",
-            "html": html_content
+            "text": html_content
         }
     )
 
