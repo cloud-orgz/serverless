@@ -35,7 +35,8 @@ def insert_verification_token(user_id):
             # Generate a new UUID for the token and convert it to a binary format
             token_id_bin = generate_random_id()
             token = uuid.uuid4().hex
-            expiry_date = datetime.now() + timedelta(minutes=2)
+            min = os.environ['EXPIRE_MIN']
+            expiry_date = datetime.now() + timedelta(minutes=min)
 
             # Insert the new verification token into the database
             cur.execute("""
@@ -126,26 +127,7 @@ def hello_pubsub(cloud_event):
     html_content = f"""
     <html>
         <body>
-            <p>Hi {username},</p>
-            <p>Please verify your email address by clicking on the button below:</p>
-            <table width="100%" cellspacing="0" cellpadding="0">
-                <tr>
-                    <td>
-                        <table cellspacing="0" cellpadding="0">
-                            <tr>
-                                <td style="border-radius: 2px;" bgcolor="#ED2939">
-                                    <a href="{verification_link}" target="_blank" style="padding: 8px 12px; border: 1px solid #ED2939;border-radius: 2px;color: #ffffff; font-family: Helvetica, Arial, sans-serif; font-size: 14px; text-decoration: none; display: inline-block;">
-                                        Verify Email
-                                    </a>
-                                </td>
-                            </tr>
-                        </table>
-                    </td>
-                </tr>
-            </table>
-            <p>If you did not request this, please ignore this email.</p>
-            <br>
-            <p>If you're having trouble with the button above, copy and paste the URL below into your web browser:</p>
+            <p>Please verify your email address by clicking on the link below:</p>
             <p><a href="{verification_link}">{verification_link}</a></p>
         </body>
     </html>
@@ -158,7 +140,7 @@ def hello_pubsub(cloud_event):
         data={
             "from": f"Webapp <noreply@mail.{domain_name}>",
             "to": email,
-            "subject": "Please Verify Your Email Address",
+            "subject": "Verify Email Address",
             "html": html_content
         }
     )
