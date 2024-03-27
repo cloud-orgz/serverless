@@ -35,7 +35,8 @@ def insert_verification_token(user_id):
             # Generate a new UUID for the token and convert it to a binary format
             token_id_bin = generate_random_id()
             token = uuid.uuid4().hex
-            expiry_date = datetime.now() + timedelta(minutes=2)
+            min = os.environ['EXPIRE_MIN']
+            expiry_date = datetime.now() + timedelta(minutes=min)
 
             # Insert the new verification token into the database
             cur.execute("""
