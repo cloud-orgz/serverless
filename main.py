@@ -116,7 +116,7 @@ def hello_pubsub(cloud_event):
     # Read domain name from environment variable
     domain_name = os.environ.get('DOMAIN_NAME', 'mukulsaipendem.me')
     # Generate the verification link using the generated token and the domain name
-    verification_link = f"http://{domain_name}:8080/v1/user/verify?token={token}"  # Use the actual token
+    verification_link = f"https://{domain_name}/v1/user/verify?token={token}"  # Use the actual token
 
     email = message_dict.get('username')
     username = message_dict.get('firstName', 'User')  # Default to 'User' if not provided
